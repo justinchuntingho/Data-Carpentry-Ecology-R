@@ -4,6 +4,7 @@
 ## Setting Up                                                                     ##
 ####################################################################################
 
+dir.create("data")
 dir.create("data_raw")
 dir.create("fig_output")
 download.file(url="https://ndownloader.figshare.com/files/2292169",
