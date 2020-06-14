@@ -13,18 +13,21 @@
 
 # Set Up
 library(tidyverse)
-interviews <- read_csv("data/SAFI_clean.csv", na = "NULL")
-interviews
+surveys <- read_csv("data_raw/portal_data_joined.csv")
+surveys
 
 ####################################################################################
 ## Selecting columns and filtering rows                                           ##
 ####################################################################################
 # To select columns of a data frame, use `select()`.
 # The first argument is the dataframe and the subsequent are the columns to keep.
-select(interviews, village, no_membrs, years_liv)
+select(surveys, plot_id, species_id, weight)
+
+# To select all columns except certain ones, put a “-” in front of the variable to exclude it.
+select(surveys, -record_id, -species_id)
 
 # To choose rows based on a specific criteria, use `filter()`:
-filter(interviews, village == "God")
+filter(surveys, year == 1995)
 
 
 ####################################################################################
@@ -34,11 +37,11 @@ filter(interviews, village == "God")
 # There are three ways to do this: use intermediate steps, nested functions, or pipes.
 
 # Intermediate steps
-interviews2 <- filter(interviews, village == "God")
-interviews_god <- select(interviews2, no_membrs, years_liv)
+surveys2 <- filter(surveys, weight < 5)
+surveys_sml <- select(surveys2, species_id, sex, weight)
 
 # Nest functions (i.e. one function inside of another)
-interviews_god <- select(filter(interviews, village == "God"), no_membrs, years_liv)
+surveys_sml <- select(filter(surveys, weight < 5), species_id, sex, weight)
 
 ## Pipes
 # - take the output of one function and send it directly to the next
@@ -46,24 +49,23 @@ interviews_god <- select(filter(interviews, village == "God"), no_membrs, years_
 # - require the `magrittr` package
 # - you can type the pipe with 'Ctrl' + 'Shift' + 'M' ('Cmd' + 'Shift' + 'M' for Mac)
 
-interviews %>%
-  filter(village == "God") %>%
-  select(no_membrs, years_liv)
+surveys %>%
+  filter(weight < 5) %>%
+  select(species_id, sex, weight)
 
 # If we want to create a new object with this smaller version of the data, we
 # can assign it a new name:
 
-interviews_god <- interviews %>%
-  filter(village == "God") %>%
-  select(no_membrs, years_liv)
+surveys_sml <- surveys %>%
+  filter(weight < 5) %>%
+  select(species_id, sex, weight)
 
-interviews_god
+surveys_sml
 
 
 ########## Exercise ########## 
-# Using pipes, subset the `interviews` data to include interviews
-# where respondents were members of an irrigation association (`memb_assoc`)
-# and retain only the columns `affect_conflicts`, `liv_count`, and `no_meals`.
+# Using pipes, subset the surveys data to include animals collected before 1995 and 
+# retain only the columns `year`, `sex`, and `weight`.
 
 ############################## 
 
@@ -72,32 +74,35 @@ interviews_god
 ####################################################################################
 # Create new columns based on the values in existing columns
 
-# We might be interested in the ratio of number of household members
-# to rooms used for sleeping (i.e. avg number of people per room):
+# We might be interested in the weight in kg:
+surveys %>%
+  mutate(weight_kg = weight / 1000)
 
-interviews %>%
-  mutate(people_per_room = no_membrs / rooms)
+# You can also create a second new column based on the first new column within the same call of mutate():
+surveys %>%
+  mutate(weight_kg = weight / 1000,
+         weight_lb = weight_kg * 2.2)
 
-# We may be interested in investigating whether being a member of an
-# irrigation association had any effect on the ratio of household members
-# to rooms. We have to remove data from our dataset where the respondent didn't 
-# answer the question of whether they were a member of an irrigation association.
-# To remove these cases, we could insert a `filter()` in the chain:
+# If this runs off your screen, you can use a pipe to view the head() of the data.
+surveys %>%
+  mutate(weight_kg = weight / 1000) %>%
+  head()
 
-interviews %>%
-  filter(!is.na(memb_assoc)) %>%
-  mutate(people_per_room = no_membrs / rooms)
+# The first few rows of the output are full of NAs, 
+# so if we wanted to remove those we could insert a `filter()` in the chain:
+surveys %>%
+  filter(!is.na(weight)) %>%
+  mutate(weight_kg = weight / 1000) %>%
+  head()
 
 # The `!` symbol negates the result, so we're asking for every row where
-# `memb_assoc` *is not* missing..
+# `weight` *is not* missing..
 
 ########## Exercise ########## 
-#  Create a new data frame from the `interviews` data that meets the following
-#  criteria: contains only the `village` column and a new column called
-#  `total_meals` containing a value that is equal to the total number of meals
-#  served in the household per day on average (`no_membrs` times `no_meals`).
-#  Only the rows where `total_meals` is greater than 20 should be shown in the
-#  final data frame.
+# Create a new data frame from the surveys data that meets the following criteria: 
+# contains only the `species_id` column AND 
+# a new column called `hindfoot_half` containing values that are half the `hindfoot_length` values. 
+# In this `hindfoot_half` column, there are *no NAs* and all values are *less than 30*.
 #
 #  **Hint**: think about how the commands should be ordered to produce this data
 #  frame!
@@ -118,175 +123,88 @@ interviews %>%
 # the column names that contain the categorical variables for which you want
 # to calculate the summary statistics.
 
-#So to compute the average household size by village:
-interviews %>%
-  group_by(village) %>%
-  summarize(mean_no_membrs = mean(no_membrs))
+# So to compute the mean weight by sex:
+surveys %>%
+  group_by(sex) %>%
+  summarize(mean_weight = mean(weight, na.rm = TRUE))
 
 # You can also group by multiple columns:
-interviews %>%
-  group_by(village, memb_assoc) %>%
-  summarize(mean_no_membrs = mean(no_membrs))
-
 # We can exclude missing data from our table using a filter step.
-interviews %>%
-  filter(!is.na(memb_assoc)) %>%
-  group_by(village, memb_assoc) %>%
-  summarize(mean_no_membrs = mean(no_membrs))
+surveys %>%
+  filter(!is.na(weight)) %>%
+  group_by(sex, species_id) %>%
+  summarize(mean_weight = mean(weight))
+
+# If you want to display more data, you can use the print() function at the end of your chain
+surveys %>%
+  filter(!is.na(weight)) %>%
+  group_by(sex, species_id) %>%
+  summarize(mean_weight = mean(weight)) %>%
+  print(n = 15)
 
 # You can also summarize multiple variables at the same time
-interviews %>%
-  filter(!is.na(memb_assoc)) %>%
-  group_by(village, memb_assoc) %>%
-  summarize(mean_no_membrs = mean(no_membrs),
-            min_membrs = min(no_membrs))
+surveys %>%
+  filter(!is.na(weight)) %>%
+  group_by(sex, species_id) %>%
+  summarize(mean_weight = mean(weight),
+            min_weight = min(weight))
 
 # You can rearrange the result of a query to inspect the values.
-interviews %>%
-  filter(!is.na(memb_assoc)) %>%
-  group_by(village, memb_assoc) %>%
-  summarize(mean_no_membrs = mean(no_membrs), min_membrs = min(no_membrs)) %>%
-  arrange(min_membrs)
+surveys %>%
+  filter(!is.na(weight)) %>%
+  group_by(sex, species_id) %>%
+  summarize(mean_weight = mean(weight),
+            min_weight = min(weight)) %>%
+  arrange(min_weight)
 
 # To sort in descending order, add the `desc()` function.
-interviews %>%
-  filter(!is.na(memb_assoc)) %>%
-  group_by(village, memb_assoc) %>%
-  summarize(mean_no_membrs = mean(no_membrs),
-            min_membrs = min(no_membrs)) %>%
-  arrange(desc(min_membrs))
-
-########## Exercise ########## 
-# Use `group_by()` and `summarize()` to find the mean, min, and max
-# number of household members for each village with. Also add the number of
-# observations (hint: see `?n`).
-############################## 
+surveys %>%
+  filter(!is.na(weight)) %>%
+  group_by(sex, species_id) %>%
+  summarize(mean_weight = mean(weight),
+            min_weight = min(weight)) %>%
+  arrange(desc(mean_weight))
 
 ####################################################################################
 ## Counting                                                                       ##
 ####################################################################################
 # When working with data, we often want to know the number of observations found
 # for each factor or combination of factors.
+surveys %>%
+  count(sex) 
 
-interviews %>%
-  count(village)
+# The `count()` function is shorthand for something we’ve already seen: 
+# grouping by a variable, and summarizing it by counting the number of observations in that group. 
+# In other words, `surveys %>% count()` is equivalent to:
+surveys %>%
+  group_by(sex) %>%
+  summarise(count = n())
+
+# We can count combination of factors:
+surveys %>%
+  count(sex, species) 
 
 # `count()` provides the `sort` argument
-interviews %>%
-  count(village, sort = TRUE)
+surveys %>%
+  count(sex, sort = TRUE) 
 
-####################################################################################
-## Reshaping with gather and spread                                               ##
-####################################################################################
-# In the spreadsheet lesson, 
-# we discussed how to structure our data leading to the four rules defining a tidy dataset:
-# 1. Each variable has its own column
-# 2. Each observation has its own row
-# 3. Each value must have its own cell
-# 4. Each type of observational unit forms a table
-# 
-# Here we examine the fourth rule: Each type of observational unit forms a table.
-# 
-# In `interviews`, each row contains the values of variables associated with each
-# record (the unit), values such as the number of household members or posessions
-# associated with each record. What if instead of comparing records, we wanted to
-# look at differences in households grouped by different types of housing
-# construction materials?
-# 
-# We'd need to create a new table where each row (the unit) is comprised
-# of values of variables associated with each housing material (e.g. for
-# `respondent_wall_type`). In practical terms this means the values
-# of the wall construction materials in `respondent_wall_type` would
-# become the names of column variables and the cells would contain `TRUE` or `FALSE`.
-# 
-# Having created a new table, we can now explore the relationship within and
-# between household types - for example we could compare the ratio of household
-# members to sleeping rooms grouped by type of construction material. The key
-# point here is that we are still following a tidy data structure, but we have
-# reshaped the data according to the observations of interest.
-# 
-# The opposite transformation would be to transform column names into values of
-# a variable.
-# 
-# We can do both these of transformations with two `tidyr` functions, `spread()`
-# and `gather()`.
+# With the above code, we can proceed with arrange() to sort the table according to 
+# a number of criteria so that we have a better comparison. 
+# For instance, we might want to arrange the table above in 
+# (i) an alphabetical order of the levels of the species and 
+# (ii) in descending order of the count:
+surveys %>%
+  count(sex, species) %>%
+  arrange(species, desc(n))
 
-## Spreading
-# 
-# `spread()` takes three principal arguments:
-# 1. the data
-# 2. the *key* column variable whose values will become new column names.
-# 3. the *value* column variable whose values will fill the new column variables.
-# 
-# Let's use `spread()` to transform interviews to create new columns for each type
-# of wall construction material. We use the pipe as before too. Because both the
-# `key` and `value` parameters must come from column values, we will create a
-# dummy column (we'll name it `wall_type_logical`) to hold the value `TRUE`, which
-# we will then place into the appropriate column that corresponds to the wall
-# construction material for that respondent. When using `mutate()` if you give a
-# single value, it will be used for all observations in the dataset. We will use
-# `fill = FALSE` in `spread()` to fill the rest of the new columns for that row
-# with `FALSE`.
+########## Exercise ########## 
+# 1. How many animals were caught in each `plot_type` surveyed?
+# 2. Use `group_by()` and `summarize()` to find the mean, min, and max hindfoot length 
+#    for each species (using `species_id`). Also add the number of observations (hint: see ?n).
+# 3. What was the heaviest animal measured in each year? 
+#    Return the columns `year`, `genus`, `species_id`, and `weight`.
 
-interviews_spread <- interviews %>%
-  mutate(wall_type_logical = TRUE) %>%
-  spread(key = respondent_wall_type, value = wall_type_logical, fill = FALSE)
-View(interviews_spread)
-View(interviews)
-
-## Gathering
-# The opposing situation could occur if we had been provided with data in the form
-# of `interviews_spread`, where the building materials are column names, but we
-# wish to treat them as values of a `respondent_wall_type` variable instead.
-# 
-# In this situation we are gathering the column names and turning them into a pair
-# of new variables. One variable represents the column names as values, and the
-# other variable contains the values previously associated with the column names.
-# We will do this in two steps to make this process a bit clearer.
-# 
-# `gather()` takes four principal arguments:
-# 1. the data
-# 2. the *key* column variable we wish to create from column names.
-# 3. the *value* column variable we wish to create and fill with values
-# associated with the key.
-# 4. the names of the columns we use to fill the key variable (or to drop).
-# 
-# To recreate our original data frame, we will use the following:
-# 1. the data - `interviews_spread`
-# 2. the *key* column will be "respondent_wall_type" (as a character string). This
-#    is the name of the new column we want to create.
-# 3. the *value* column will be `wall_type_logical`. This will be either `TRUE` or
-#    `FALSE`.
-# 4. the names of the columns we will use to fill the key variable are
-#    `burntbricks:sunbricks` (the column named "burntbricks" up to and including
-#    the column named "sunbricks" as they are ordered in the data frame).
-# 
-interviews_gather <- interviews_spread %>%
-  gather(key = respondent_wall_type, value = "wall_type_logical",
-         burntbricks:sunbricks)
-
-# This creates a data frame with 524 rows (4 rows per interview respondent). 
-# The four rows for each respondent differ only in the
-# value of the "respondent_wall_type" and "dummy" columns. 
-# 
-# Only one row for each interview respondent is informative - we know that if the
-# house walls are made of "sunbrick" they aren't made of any other the other
-# materials. Therefore, we can get filter our dataset to only keep values where
-# `wall_type_logical` is `TRUE`. Because, `wall_type_logical` is already either
-# `TRUE` or `FALSE`, when passing the column name to `filter()`, it will
-# automatically already only keep rows where this column has the value `TRUE`. We
-# can then remove the `wall_type_logical` column. We do all of these steps
-# together in the next chunk of code:
-
-interviews_gather <- interviews_spread %>%
-  gather(key = "respondent_wall_type", value = "wall_type_logical",
-         burntbricks:sunbricks) %>%
-  filter(wall_type_logical) %>%
-  select(-wall_type_logical)
-
-# View both `interviews_gather` and `interviews_spread` and compare their
-# structure. Notice that the rows have been reordered in `interviews_gather` such
-# that all of the respondents with a particular wall type are grouped together.
+############################## 
 
 ####################################################################################
 ## Exporting data                                                                 ##
@@ -294,26 +212,25 @@ interviews_gather <- interviews_spread %>%
 # Similar to the `read_csv()` function used for reading CSV files into R, there is
 # a `write_csv()` function that generates CSV files from data frames.
 
-# In preparation for our next lesson on plotting, we are going to create a
-# version of the dataset where each of the columns includes only one
-# data value. To do this, we will use spread to expand the
-# `months_lack_food` and `items_owned` columns. We will also create a couple of summary columns.
+# In preparation for our next lesson on plotting, we are going to prepare 
+# a cleaned up version of the data set that doesn’t include any missing data.
+surveys_complete <- surveys %>%
+  filter(!is.na(weight),           # remove missing weight
+         !is.na(hindfoot_length),  # remove missing hindfoot_length
+         !is.na(sex))                # remove missing sex
 
-interviews_plotting <- interviews %>%
-  ## spread data by items_owned
-  mutate(split_items = strsplit(items_owned, ";")) %>%
-  unnest() %>%
-  mutate(items_owned_logical = TRUE) %>%
-  spread(key = split_items, value = items_owned_logical, fill = FALSE) %>%
-  rename(no_listed_items = `<NA>`) %>%
-  ## spread data by months_lack_food
-  mutate(split_months = strsplit(months_lack_food, ";")) %>%
-  unnest() %>%
-  mutate(months_lack_food_logical = TRUE) %>%
-  spread(key = split_months, value = months_lack_food_logical, fill = FALSE) %>%
-  ## add some summary columns
-  mutate(number_months_lack_food = rowSums(select(., Apr:Sept))) %>%
-  mutate(number_items = rowSums(select(., bicycle:television)))
+# Because we are interested in plotting how species abundances have changed through time, 
+# we are also going to remove observations for rare species. We will do this in two steps: 
+# first we are going to create a data set that counts how often each species has been observed, 
+# and filter out the rare species; then, we will extract only the observations for these more common species:
+## Extract the most common species_id
+species_counts <- surveys_complete %>%
+  count(species_id) %>% 
+  filter(n >= 50)
 
-# Now we can save this data frame to our `data_output` directory.
-write_csv(interviews_plotting, path = "data_output/interviews_plotting.csv")
+## Only keep the most common species
+surveys_complete <- surveys_complete %>%
+  filter(species_id %in% species_counts$species_id)
+
+# Now we can save this data frame to our `data` directory.
+write_csv(surveys_complete, path = "data/surveys_complete.csv")
