@@ -298,7 +298,7 @@ ggsave("combo_plot_abun_weight.png", combo_plot, width = 10, dpi = 300)
 # https://socviz.co/
 
 # How about animation?
-# https://www.datanovia.com/en/blog/gganimate-how-to-create-plots-with-beautiful-animation-in-r/
+# https://github.com/thomasp85/gganimate
 
 # How about interactive plots?
 # https://www.r-graph-gallery.com/interactive-charts.html

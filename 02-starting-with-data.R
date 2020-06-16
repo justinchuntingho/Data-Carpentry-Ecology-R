@@ -20,6 +20,30 @@ library(tidyverse)
 surveys <- read.csv("data_raw/portal_data_joined.csv")
 
 ####################################################################################
+## Quick Recap                                                                   ##
+####################################################################################
+## Creating Objects:
+# To create an object, we need to give it a name followed by the
+# assignment operator `<-`, and the value we want to give it.
+## Functions:
+# - Functions are "canned scripts"
+# - Predefined, or can be made available by importing R *packages*
+# - A function usually gets one or more inputs called *arguments*
+# - Can return a single value, and also a set of things, or even a dataset 
+## Vector
+# - composed by a series of values, can be either numbers or characters. 
+# - can be assigned using the `c()` function.
+## Dataframes
+# - the representation of data in the format of a table
+# - columns are vectors that all have the same length
+# - each column must contain a single type of data
+## Subsetting
+# If we want to extract one or several values from a vector or dataframe, we must provide one
+# or several indices in square brackets `[` and `]`.
+# For vector, supply the index: vector[1]
+# For dataframe, supply the row and column: surveys[1,1]
+
+####################################################################################
 ## Factors                                                                        ##
 ####################################################################################
 
