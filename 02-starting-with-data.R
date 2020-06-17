@@ -10,12 +10,6 @@ dir.create("fig_output")
 download.file(url="https://ndownloader.figshare.com/files/2292169",
               destfile = "data_raw/portal_data_joined.csv")
 
-
-# You are going load the data in R's memory using the function `read_csv()`
-# from the `readr` package which is part of the **`tidyverse`**. 
-# So, before we can use the `read_csv()` function, we need to load the package. 
-# The missing data is encoded as "NULL" in the dataset. 
-
 library(tidyverse)
 surveys <- read.csv("data_raw/portal_data_joined.csv")
 
@@ -25,18 +19,22 @@ surveys <- read.csv("data_raw/portal_data_joined.csv")
 ## Creating Objects:
 # To create an object, we need to give it a name followed by the
 # assignment operator `<-`, and the value we want to give it.
+
 ## Functions:
 # - Functions are "canned scripts"
 # - Predefined, or can be made available by importing R *packages*
 # - A function usually gets one or more inputs called *arguments*
 # - Can return a single value, and also a set of things, or even a dataset 
-## Vector
+
+## Vectors
 # - composed by a series of values, can be either numbers or characters. 
 # - can be assigned using the `c()` function.
+
 ## Dataframes
 # - the representation of data in the format of a table
 # - columns are vectors that all have the same length
 # - each column must contain a single type of data
+
 ## Subsetting
 # If we want to extract one or several values from a vector or dataframe, we must provide one
 # or several indices in square brackets `[` and `]`.

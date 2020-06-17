@@ -13,7 +13,7 @@
 
 # Set Up
 library(tidyverse)
-surveys <- read_csv("data_raw/portal_data_joined.csv")
+surveys <- read_csv("data_raw/portal_data_joined.csv") # Note that we are using `read_csv()` instead of `read.csv()`!!
 surveys
 
 ####################################################################################
